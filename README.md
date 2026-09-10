@@ -1,0 +1,68 @@
+# Consolidation of Project Requirements 
+for my convience and tracking
+### Task List
+
+- [ ] A Python script using Spark that sanitizes the Customer data from the Website (Landing Zone) and only stores the Customer Records who agreed to share their data for research purposes (Trusted Zone) - creating a Glue Table called customer_trusted.
+- [ ] A Python script using Spark that sanitizes the Accelerometer data from the Mobile App (Landing Zone) - and only stores Accelerometer Readings from customers who agreed to share their data for research purposes (Trusted Zone) - creating a Glue Table called accelerometer_trusted 
+- [] A Python script using Spark that sanitizes the Customer data (Trusted Zone) and creates a Glue Table (Curated Zone) that only includes customers who have accelerometer data and have agreed to share their data for research called customers_curated.
+- [ ] A Python script using Spark that reads the Step Trainer IoT data stream (S3) and populates a Trusted Zone Glue Table called step_trainer_trusted containing the Step Trainer Records data for customers who have accelerometer data and have agreed to share their data for research (customers_curated).
+- [ ] A Python script using Spark that creates an aggregated table that has each of the Step Trainer readings, and the associated accelerometer reading data for the same timestamp, but only for customers who have agreed to share their data, and populates a glue table called machine_learning_curated.
+- [ ] customer_landing.sql, accelerometer_landing.sql, and your step_trainer_landing.sql script along with screenshots customer_landing (.png,.jpeg, etc.), accelerometer_landing (.png,.jpeg, etc.), and step_trainer_landing (.png,.jpeg, etc.)
+- [ ] A screenshot of your Athena query of the customers_trusted Glue table called customer_trusted(.png,.jpeg, etc.)
+- [ ] Check the Project Rubric and ensure you have met all criteria and specifications.
+
+### Rubric (with noted corrections from troubleshooting and original readme)
+- [] Landing Zone
+    - [] Glue jobs have a node that connects to S3 bucket for customer, accelerometer, and step trainer landing zones.
+        - [] customer_landing_to_trusted.py
+        - [] accelerometer_landing_to_trusted.py
+        - [] step_trainer_trusted.py
+    - [] SQL DDL scripts customer_landing.sql, accelerometer_landing.sql, and step_trainer_landing.sql include all of the JSON fields in the data input files and are appropriately typed (not everything is a string).
+    - [] Include screenshots showing various queries run on Athena, along with their results:
+        - [] Count of customer_landing: 956 rows
+        - [] The customer_landing data contains multiple rows with a blank shareWithResearchAsOfDate.
+        - [] Count of accelerometer_landing: 81273 rows
+        - [] Count of step_trainer_landing: 28680 rows
+- [] Trusted Zone
+    - [] Glue Job Python code shows that the option to dynamically infer and update schema is enabled.
+        - To do this, set the Create a table in the Data Catalog and, on subsequent runs, update the schema and add new partitions option to True.
+    - [] Screenshots of Athena Query
+        - [] The resulting customer_trusted data has no rows where shareWithResearchAsOfDate is blank.
+        - [] Baseline
+            - [] Count of customer_trusted: 482 rows
+            - [] Count of accelerometer_trusted: 40981 rows
+            - [] Count of step_trainer_trusted: 14460 rows
+        - [] Stand out
+            - [] Count of customer_trusted: 482 rows
+            - [] Count of accelerometer_trusted: 32025 rows
+            - [] Count of step_trainer_trusted: 14460 rows
+    - [] Filter protected PII with Spark in Glue Jobs
+        - Hint: Transform - SQL Query node often gives more consistent outputs than other node types.
+        - Hint: Glue Jobs do not replace any file. Delete your S3 files and Athena table whenever you update your visual ETLs.
+        - [] customer_landing_to_trusted.py has a node that drops rows that do not have data in the sharedWithResearchAsOfDate column.
+    - [] Join Privacy tables with Glue Jobs
+        - [] accelerometer_landing_to_trusted.py has a node that inner joins the customer_trusted data with the accelerometer_landing data by emails. The produced table should have only columns from the accelerometer table.
+- [] Curated Zone
+    - [] Write a Glue Job to join trusted data
+        - [] customer_trusted_to_curated.py has a node that inner joins the customer_trusted data with the accelerometer_trusted data by emails. The produced table should have only columns from the customer table.
+    - [] Write a Glue Job to create curated data
+        - Hint: Data Source - S3 bucket node sometimes extracted incomplete data. Use the Data Source - Data Catalog node when that's the case.
+        - Hint: Use the Data Preview feature with at least 500 rows to ensure the number of customer-curated rows is correct. Click "Start data preview session", then click the gear next to the "Filter" text box to update the number of rows
+        - Hint: As before, the Transform - SQL Query node often gives more consistent outputs than any other node type. Tip - replace the JOIN node with it.
+        - Hint: The step_trainer_trusted may take about 8 minutes to run.
+        - [] step_trainer_trusted.py has a node that inner joins the step_trainer_landing data with the customer_curated data by serial numbers
+        - [] machine_learning_curated.py has a node that inner joins the step_trainer_trusted data with the accelerometer_trusted data by sensor reading time and timestamps
+    - [] Screenshots of Athena Query
+        - Hint: If you get unexpected results, consider using the Transform - SQL Query node rather than Glue-provided nodes.
+        - [] Baseline
+            - [] Count of customer_curated: 482 rows
+            - [] Count of machine_learning_curated: 43681 rows
+        - [] Stand out
+            - [] Count of customer_curated: 464 rows
+            - [] Count of machine_learning_curated: 34437 rows
+- [] Standout
+    - [] When creating the Glue Job to join data from the accelerometer readings and the customer table, filter out any readings that were prior to the research consent date. This will ensure consent was in place at the time that data was gathered. This helps in the case that in the future the customer revokes consent. We can be sure that the data we used for research was used when consent was in place for that particular data.
+    - [] Anonymize the final curated table so that it is not subject to GDPR or other privacy regulations, in case a customer requests deletion of PII, we will not be in violation by retaining PII data --remove email, and any other personally identifying information up front.
+### Done ✓
+- []
+ - [] Create my first TODO.md  
